@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bottle Traceability</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --blue: #1d4ed8;
+      --green: #15803d;
+      --amber: #b45309;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #e8edf3;
+    }
+    button, input, select {
+      font: inherit;
+    }
+    .hidden { display: none !important; }
+
+    .page { max-width: 1180px; margin: 0 auto; padding: 24px; }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+    }
+    .login-shell { max-width: 420px; margin: 80px auto; }
+    .login-shell h1 { margin: 0 0 8px; font-size: 24px; }
+    .login-shell p { margin: 0 0 16px; color: var(--muted); }
+    .login-shell input, .login-shell select, .login-shell button {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 6px 0;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+    }
+    .login-shell button, .desk-form button, .phone-btn {
+      background: var(--blue);
+      color: #fff;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    button.secondary { background: #374151; color: #fff; border: 0; border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+
+    .desk-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; }
+    .desk-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .desk-form .full { grid-column: 1 / -1; }
+    .desk-form label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    .desk-form input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+    }
+    .desk-form button { padding: 12px; border-radius: 10px; }
+    .bottle-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .bottle-table th, .bottle-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
+    .status-registered { color: var(--blue); font-weight: 700; }
+    .status-distributed { color: var(--green); font-weight: 700; }
+    .status-consumed { color: var(--amber); font-weight: 700; }
+
+    .stage { display: flex; justify-content: center; padding: 12px 0 28px; }
+    .phone-shell {
+      width: 380px;
+      background: #111;
+      border-radius: 42px;
+      padding: 14px 12px 18px;
+      border: 1px solid #2d2d2d;
+    }
+    .phone-bar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .notch {
+      width: 120px;
+      height: 18px;
+      background: #000;
+      border-radius: 12px;
+    }
+    .phone-screen {
+      background: #f7f4ee;
+      border-radius: 30px;
+      min-height: 680px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-header {
+      padding: 18px 16px 12px;
+      color: #fff;
+    }
+    .phone-header.distributor { background: #15803d; }
+    .phone-header.consumer { background: #b45309; }
+    .phone-header small { display: block; opacity: 0.85; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .phone-header h2 { margin: 4px 0 0; font-size: 20px; }
+    .phone-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .phone-search { display: flex; gap: 8px; }
+    .phone-search input, .phone-body select {
+      flex: 1;
+      border: 1px solid #d6d3d1;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+    .phone-btn {
+      border-radius: 12px;
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+    .phone-btn.full { width: 100%; }
+    .phone-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid #e7e5e4;
+    }
+    .phone-card h3 { margin: 0 0 6px; font-size: 15px; }
+    .phone-meta { font-size: 12px; color: #57534e; line-height: 1.45; }
+    .phone-list { display: flex; flex-direction: column; gap: 8px; max-height: 390px; overflow: auto; }
+    .qr-box { display: flex; justify-content: center; padding: 8px 0; }
+    .qr-box img { width: 148px; height: 148px; background: #fff; }
+    .home-indicator {
+      width: 110px;
+      height: 5px;
+      background: #d6d3d1;
+      border-radius: 99px;
+      margin: 8px auto 10px;
+    }
+    .msg { font-size: 13px; color: #44403c; min-height: 18px; }
+    pre.chain {
+      background: #111827;
+      color: #f9fafb;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .desk-grid, .desk-form { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div id="loginBox" class="card login-shell">
+      <h1>Trazabilidad de botellas</h1>
+      <p>Inicia sesión para continuar el flujo manufacturer → distributor → consumer.</p>
+      <form id="loginForm">
+        <select id="userSelect">
+          <option value="manufacturer">manufacturer</option>
+          <option value="distributor">distributor</option>
+          <option value="consumer">consumer</option>
+        </select>
+        <input type="password" id="password" placeholder="password" value="manufacturer123" required />
+        <button type="submit">Entrar</button>
+      </form>
+    </div>
+
+    <div id="appBox" class="hidden">
+      <div class="card toolbar">
+        <div>Sesión <span id="userBadge" class="badge"></span></div>
+        <div>
+          <button id="chainBtn" class="secondary">Ver cadena</button>
+          <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+        </div>
+      </div>
+
+      <div id="manufacturerView" class="hidden">
+        <div class="desk-grid">
+          <div class="card">
+            <h2>Registrar botella</h2>
+            <form id="registerForm" class="desk-form">
+              <div><label>Código único</label><input id="unique_code" required /></div>
+              <div><label>Código QR</label><input id="qr_code" placeholder="Se completa con el código único" /></div>
+              <div><label>Nombre del producto</label><input id="product_name" required /></div>
+              <div><label>Número de acta</label><input id="acta_number" required /></div>
+              <div><label>Empresa distribuidora</label><input id="distributor_company" required /></div>
+              <div><label>Código de barras</label><input id="barcode" required /></div>
+              <div><label>Departamento de consumo</label><input id="consumption_department" required /></div>
+              <div><label>Grado de alcohol</label><input id="alcohol_degree" required /></div>
+              <div><label>Sitio web de consultas</label><input id="query_website" placeholder="https://..." /></div>
+              <div><label>Fecha de acta</label><input id="acta_date" type="date" required /></div>
+              <div><label>Capacidad del producto</label><input id="product_capacity" required /></div>
+              <div><label>Número de lote de impresión</label><input id="print_lot_number" required /></div>
+              <div class="full"><label>Consecutivo de impresión</label><input id="print_consecutive" required /></div>
+              <div class="full"><button type="submit">Crear botella (estado: registered)</button></div>
+            </form>
+            <p id="manufacturerMsg" class="msg"></p>
+          </div>
+          <div class="card">
+            <h2>Botellas</h2>
+            <div class="phone-search" style="margin-bottom:12px">
+              <input id="mfrSearch" placeholder="Buscar por código único" />
+              <button class="phone-btn" id="mfrSearchBtn">Buscar</button>
+            </div>
+            <div style="overflow:auto">
+              <table class="bottle-table">
+                <thead>
+                  <tr><th>Código</th><th>Producto</th><th>Estado</th></tr>
+                </thead>
+                <tbody id="mfrBottleRows"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="distributorView" class="hidden">
+        <div class="stage">
+          <div class="phone-shell">
+            <div class="phone-bar"><div class="notch"></div></div>
+            <div class="phone-screen">
+              <div class="phone-header distributor">
+                <small>App de campo</small>
+                <h2>Distribuidor</h2>
+              </div>
+              <div class="phone-body">
+                <div class="phone-search">
+                  <input id="distSearch" placeholder="Código único" />
+                  <button class="phone-btn" id="distSearchBtn">Buscar</button>
+                </div>
+                <div class="phone-card">
+                  <label class="phone-meta">Entregar a consumidor</label>
+                  <select id="consumerSelect"></select>
+                </div>
+                <div id="distList" class="phone-list"></div>
+                <p id="distMsg" class="msg"></p>
+              </div>
+              <div class="home-indicator"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="consumerView" class="hidden">
+        <div class="stage">
+          <div class="phone-shell">
+            <div class="phone-bar"><div class="notch"></div></div>
+            <div class="phone-screen">
+              <div class="phone-header consumer">
+                <small>Consulta ciudadana</small>
+                <h2>Consumidor</h2>
+              </div>
+              <div class="phone-body">
+                <div class="phone-search">
+                  <input id="consSearch" placeholder="Escanear / código único" />
+                  <button class="phone-btn" id="consSearchBtn">Ver</button>
+                </div>
+                <div id="consDetail" class="phone-card hidden"></div>
+                <div id="consList" class="phone-list"></div>
+                <p id="consMsg" class="msg"></p>
+              </div>
+              <div class="home-indicator"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="chainBox" class="card hidden" style="margin-top:18px">
+        <h3>Estado de la cadena</h3>
+        <pre id="chainResult" class="chain">Sin resultado aún</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = '';
+    let token = '';
+    let user = null;
+
+    const loginBox = document.getElementById('loginBox');
+    const appBox = document.getElementById('appBox');
+    const userBadge = document.getElementById('userBadge');
+    const userSelect = document.getElementById('userSelect');
+    const manufacturerView = document.getElementById('manufacturerView');
+    const distributorView = document.getElementById('distributorView');
+    const consumerView = document.getElementById('consumerView');
+
+    userSelect.addEventListener('change', () => {
+      const passwords = {
+        manufacturer: 'manufacturer123',
+        distributor: 'distributor123',
+        consumer: 'consumer123'
+      };
+      document.getElementById('password').value = passwords[userSelect.value];
+    });
+
+    document.getElementById('unique_code').addEventListener('input', (e) => {
+      const qr = document.getElementById('qr_code');
+      if (!qr.dataset.touched) qr.value = e.target.value;
+    });
+    document.getElementById('qr_code').addEventListener('input', (e) => {
+      e.target.dataset.touched = e.target.value ? '1' : '';
+    });
+
+    async function request(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (!(options.body instanceof FormData)) {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+      }
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await fetch(`${apiBase}${path}`, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail;
+        throw new Error(typeof detail === 'string' ? detail : 'Error en la petición');
+      }
+      return data;
+    }
+
+    function statusClass(status) {
+      return `status-${status}`;
+    }
+
+    function showRole(role) {
+      manufacturerView.classList.add('hidden');
+      distributorView.classList.add('hidden');
+      consumerView.classList.add('hidden');
+      if (role === 'manufacturer') manufacturerView.classList.remove('hidden');
+      if (role === 'distributor') distributorView.classList.remove('hidden');
+      if (role === 'consumer') consumerView.classList.remove('hidden');
+    }
+
+    function qrUrl(value) {
+      return `https://api.qrserver.com/v1/create-qr-code/?size=148x148&data=${encodeURIComponent(value || '')}`;
+    }
+
+    async function loadBottles(code = '') {
+      const query = code ? `?unique_code=${encodeURIComponent(code)}` : '';
+      const data = await request(`/api/bottles${query}`);
+      return data.bottles || [];
+    }
+
+    function renderManufacturerRows(bottles) {
+      document.getElementById('mfrBottleRows').innerHTML = bottles.map((b) => `
+        <tr>
+          <td>${b.unique_code}</td>
+          <td>${b.product_name}</td>
+          <td class="${statusClass(b.status)}">${b.status}</td>
+        </tr>
+      `).join('');
+    }
+
+    function bottleCard(b, actionHtml = '') {
+      return `
+        <div class="phone-card">
+          <h3>${b.product_name}</h3>
+          <div class="phone-meta">
+            <div><strong>${b.unique_code}</strong> · <span class="${statusClass(b.status)}">${b.status}</span></div>
+            <div>${b.distributor_company}</div>
+            <div>${b.consumption_department} · ${b.alcohol_degree} · ${b.product_capacity}</div>
+          </div>
+          ${actionHtml}
+        </div>
+      `;
+    }
+
+    async function refreshManufacturer(code = '') {
+      renderManufacturerRows(await loadBottles(code));
+    }
+
+    async function refreshDistributor(code = '') {
+      const bottles = await loadBottles(code);
+      const registered = bottles.filter((b) => b.status === 'registered');
+      document.getElementById('distList').innerHTML = registered.length
+        ? registered.map((b) => bottleCard(b, `<button class="phone-btn full" data-dist="${b.id}" style="margin-top:10px">Distribuir</button>`)).join('')
+        : '<div class="phone-card">No hay botellas en estado registered.</div>';
+      document.querySelectorAll('[data-dist]').forEach((btn) => {
+        btn.addEventListener('click', () => distributeBottle(Number(btn.dataset.dist)));
+      });
+    }
+
+    async function loadConsumers() {
+      const data = await request('/api/users?role=consumer');
+      const select = document.getElementById('consumerSelect');
+      select.innerHTML = data.users.map((u) => `<option value="${u.id}">${u.username} (#${u.id})</option>`).join('');
+    }
+
+    async function distributeBottle(bottleId) {
+      const targetUserId = Number(document.getElementById('consumerSelect').value);
+      try {
+        const res = await request('/api/bottles/distribute', {
+          method: 'POST',
+          body: JSON.stringify({ bottle_id: bottleId, target_user_id: targetUserId })
+        });
+        document.getElementById('distMsg').textContent = res.message;
+        await refreshDistributor(document.getElementById('distSearch').value.trim());
+      } catch (err) {
+        document.getElementById('distMsg').textContent = err.message;
+      }
+    }
+
+    function renderConsumerDetail(b) {
+      const canConsume = b.status === 'distributed';
+      document.getElementById('consDetail').classList.remove('hidden');
+      document.getElementById('consDetail').innerHTML = `
+        <div class="qr-box"><img alt="QR" src="${qrUrl(b.qr_code || b.unique_code)}" /></div>
+        <h3>${b.product_name}</h3>
+        <div class="phone-meta">
+          <div>Estado: <span class="${statusClass(b.status)}">${b.status}</span></div>
+          <div>Código único: ${b.unique_code}</div>
+          <div>Acta: ${b.acta_number} (${b.acta_date})</div>
+          <div>Empresa: ${b.distributor_company}</div>
+          <div>Barras: ${b.barcode}</div>
+          <div>Depto: ${b.consumption_department}</div>
+          <div>Alcohol: ${b.alcohol_degree} · ${b.product_capacity}</div>
+          <div>Lote impresión: ${b.print_lot_number} / ${b.print_consecutive}</div>
+          <div>Consulta: ${b.query_website || '—'}</div>
+        </div>
+        ${canConsume ? `<button class="phone-btn full" id="consumeNow" style="margin-top:10px">Consumir</button>` : '<p class="msg">Solo se consume si ya fue distribuida.</p>'}
+      `;
+      const consumeBtn = document.getElementById('consumeNow');
+      if (consumeBtn) {
+        consumeBtn.addEventListener('click', async () => {
+          try {
+            const res = await request('/api/bottles/consume', {
+              method: 'POST',
+              body: JSON.stringify({ bottle_id: b.id })
+            });
+            document.getElementById('consMsg').textContent = res.message;
+            await showConsumerBottle(b.unique_code);
+          } catch (err) {
+            document.getElementById('consMsg').textContent = err.message;
+          }
+        });
+      }
+    }
+
+    async function showConsumerBottle(code) {
+      if (!code) {
+        const bottles = await loadBottles();
+        document.getElementById('consDetail').classList.add('hidden');
+        document.getElementById('consList').innerHTML = bottles.map((b) => bottleCard(b)).join('');
+        return;
+      }
+      const data = await request(`/api/bottles/by-code/${encodeURIComponent(code)}`);
+      document.getElementById('consList').innerHTML = '';
+      renderConsumerDetail(data.bottle);
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = new FormData();
+      form.append('username', userSelect.value);
+      form.append('password', document.getElementById('password').value);
+      const res = await fetch(`${apiBase}/auth/login`, { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || 'Login fallido');
+        return;
+      }
+      token = data.access_token;
+      user = await request('/me');
+      userBadge.textContent = `${user.username} (${user.role})`;
+      showRole(user.role);
+      loginBox.classList.add('hidden');
+      appBox.classList.remove('hidden');
+      document.getElementById('chainBox').classList.add('hidden');
+      if (user.role === 'manufacturer') await refreshManufacturer();
+      if (user.role === 'distributor') {
+        await loadConsumers();
+        await refreshDistributor();
+      }
+      if (user.role === 'consumer') await showConsumerBottle('');
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      token = '';
+      user = null;
+      loginBox.classList.remove('hidden');
+      appBox.classList.add('hidden');
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        unique_code: document.getElementById('unique_code').value.trim(),
+        qr_code: document.getElementById('qr_code').value.trim(),
+        product_name: document.getElementById('product_name').value.trim(),
+        acta_number: document.getElementById('acta_number').value.trim(),
+        distributor_company: document.getElementById('distributor_company').value.trim(),
+        barcode: document.getElementById('barcode').value.trim(),
+        consumption_department: document.getElementById('consumption_department').value.trim(),
+        alcohol_degree: document.getElementById('alcohol_degree').value.trim(),
+        query_website: document.getElementById('query_website').value.trim(),
+        acta_date: document.getElementById('acta_date').value,
+        product_capacity: document.getElementById('product_capacity').value.trim(),
+        print_lot_number: document.getElementById('print_lot_number').value.trim(),
+        print_consecutive: document.getElementById('print_consecutive').value.trim()
+      };
+      try {
+        const res = await request('/api/bottles/register', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        document.getElementById('manufacturerMsg').textContent = res.message;
+        e.target.reset();
+        await refreshManufacturer();
+      } catch (err) {
+        document.getElementById('manufacturerMsg').textContent = err.message;
+      }
+    });
+
+    document.getElementById('mfrSearchBtn').addEventListener('click', async () => {
+      await refreshManufacturer(document.getElementById('mfrSearch').value.trim());
+    });
+    document.getElementById('distSearchBtn').addEventListener('click', async () => {
+      await refreshDistributor(document.getElementById('distSearch').value.trim());
+    });
+    document.getElementById('consSearchBtn').addEventListener('click', async () => {
+      try {
+        await showConsumerBottle(document.getElementById('consSearch').value.trim());
+      } catch (err) {
+        document.getElementById('consMsg').textContent = err.message;
+      }
+    });
+    document.getElementById('chainBtn').addEventListener('click', async () => {
+      const box = document.getElementById('chainBox');
+      box.classList.remove('hidden');
+      try {
+        const data = await request('/api/chain');
+        document.getElementById('chainResult').textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById('chainResult').textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
